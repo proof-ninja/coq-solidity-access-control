@@ -79,31 +79,31 @@ Axiom RevokeRoleE : forall role account sender storage,
     = Error "RevokeRole".
 
 
-Lemma next_inv : forall (op: operation) (sd : address) (s1 s2: storage),
-    next op sd s1 = Success s2 ->
+Lemma next_inv : forall (op: operation) (sender : address) (s1 s2: storage),
+    next op sender s1 = Success s2 ->
     exists op' sender', next op' sender' s2 = Success s1.
 Proof.
-  destruct op; intros sd [rs1] [rs2].
+  destruct op; intros sender [rs1] [rs2].
   - (* op = HasRole の場合 *)
     rewrite HasRoleS.
-    exists (HasRole role0 account), sd.
+    exists (HasRole role0 account), sender.
     now rewrite HasRoleS.
   - (* op = GrantRole の場合 *)
-    destruct (Roles.has Admin sd rs1) eqn: is_sender_admin; [|now rewrite GrantRoleE].
+    destruct (Roles.has Admin sender rs1) eqn: is_sender_admin; [|now rewrite GrantRoleE].
     rewrite GrantRoleS; [|now auto]. injection 1. intros eqs2.
     destruct (Roles.has role0 account rs1) eqn: has_role.
     + (* s1ですでにrole0権限を持っている場合は s1=s2 *)
-      exists (GrantRole role0 account), sd. rewrite <- eqs2. rewrite GrantRoleS.
+      exists (GrantRole role0 account), sender. rewrite <- eqs2. rewrite GrantRoleS.
       * simpl. rewrite Roles.set_set.
         do 2 f_equal. apply Roles.same. intros r acc.
         destruct (Sumbool.sumbool_and _ _ _ _ (role_eq_dec role0 r)(address_eq_dec account acc)).
         -- destruct a. subst r acc. now rewrite Roles.has_set, has_role.
         -- now rewrite Roles.has_set_other.
-      * simpl. destruct (Sumbool.sumbool_and _ _ _ _ (role_eq_dec role0 Admin)(address_eq_dec account sd)).
+      * simpl. destruct (Sumbool.sumbool_and _ _ _ _ (role_eq_dec role0 Admin)(address_eq_dec account sender)).
         -- destruct a. subst role0 account. now rewrite Roles.has_set.
         -- now rewrite Roles.has_set_other.
     + (* s1でrole0を持っていなかった場合 *)
-      exists (RevokeRole role0 account), sd. rewrite <- eqs2.
+      exists (RevokeRole role0 account), sender. rewrite <- eqs2.
       rewrite RevokeRoleS.
       * do 2 f_equal. simpl.
         rewrite Roles.set_set.
@@ -111,16 +111,16 @@ Proof.
         destruct (Sumbool.sumbool_and _ _ _ _ (role_eq_dec role0 r)(address_eq_dec account acc)).
         -- destruct a. subst r acc. now rewrite Roles.has_set, has_role.
         -- now rewrite Roles.has_set_other.
-      * simpl. destruct (Sumbool.sumbool_and _ _ _ _ (role_eq_dec role0 Admin)(address_eq_dec account sd)).
+      * simpl. destruct (Sumbool.sumbool_and _ _ _ _ (role_eq_dec role0 Admin)(address_eq_dec account sender)).
         -- destruct a. subst role0 account. now rewrite Roles.has_set.
         -- now rewrite Roles.has_set_other.
   - (* op = RevokeRole の場合 *)
-    destruct (Roles.has Admin sd rs1) eqn: is_sender_admin; [|now rewrite RevokeRoleE].
+    destruct (Roles.has Admin sender rs1) eqn: is_sender_admin; [|now rewrite RevokeRoleE].
     rewrite RevokeRoleS; [|now auto]. simpl. injection 1. intros eqs2.
     rewrite <- eqs2.
     destruct (Roles.has role0 account rs1) eqn: has_role.
     + (* 実行前のs1でrole0の権限があった場合 *)
-      exists (GrantRole role0 account), sd.
+      exists (GrantRole role0 account), sender.
       rewrite GrantRoleS.
       * (* *)
         do 2 f_equal. simpl. rewrite Roles.set_set.
@@ -128,15 +128,15 @@ Proof.
         destruct (Sumbool.sumbool_and _ _ _ _ (role_eq_dec role0 r)(address_eq_dec account acc)).
         -- destruct a. subst r acc. now rewrite Roles.has_set, has_role.
         -- now rewrite Roles.has_set_other.
-      * (* s2 で sdがAdminである必要がある *)
+      * (* s2 で senderがAdminである必要がある *)
         simpl.
-        destruct (Sumbool.sumbool_and _ _ _ _ (role_eq_dec role0 Admin)(address_eq_dec account sd)).
+        destruct (Sumbool.sumbool_and _ _ _ _ (role_eq_dec role0 Admin)(address_eq_dec account sender)).
         -- destruct a. subst role0 account. rewrite Roles.has_set.
            (* ??? : false = true ??? *)
            admit.
         -- now rewrite Roles.has_set_other, is_sender_admin.
     + (* 実行前のs1ですでにrole0の権限がない場合 : s1=s2 *)
-      exists (RevokeRole role0 account), sd.
+      exists (RevokeRole role0 account), sender.
       rewrite RevokeRoleS. simpl.
       * do 2 f_equal.
         rewrite Roles.set_set. apply Roles.same. intros r acc.
@@ -144,7 +144,7 @@ Proof.
         -- destruct a. subst r acc. now rewrite Roles.has_set, has_role.
         -- now rewrite Roles.has_set_other.
       * simpl.
-        destruct (Sumbool.sumbool_and _ _ _ _ (role_eq_dec role0 Admin)(address_eq_dec account sd)).
+        destruct (Sumbool.sumbool_and _ _ _ _ (role_eq_dec role0 Admin)(address_eq_dec account sender)).
         -- destruct a. subst role0 account. now rewrite has_role in is_sender_admin.
         -- now rewrite Roles.has_set_other.
 Admitted.
