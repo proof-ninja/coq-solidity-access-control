@@ -1,0 +1,6 @@
+-R . Foo
+src/Result.v
+src/Error.v
+src/Dict.v
+src/SolidityBase.v
+src/Contract.v
