@@ -92,7 +92,7 @@ Proof.
     destruct (Roles.has Admin sender rs1) eqn: is_sender_admin; [|now rewrite GrantRoleE].
     rewrite GrantRoleS; [|now auto]. injection 1. intros eqs2.
     destruct (Roles.has role0 account rs1) eqn: has_role.
-    + (* s1ですでにrole0権限を持っている場合は s1=s2 *)
+    + (* 事前状態 s1ですでにrole0権限を持っている場合は s1=s2 *)
       exists (GrantRole role0 account), sender. rewrite <- eqs2. rewrite GrantRoleS.
       * simpl. rewrite Roles.set_set.
         do 2 f_equal. apply Roles.same. intros r acc.
@@ -102,7 +102,7 @@ Proof.
       * simpl. destruct (Sumbool.sumbool_and _ _ _ _ (role_eq_dec role0 Admin)(address_eq_dec account sender)).
         -- destruct a. subst role0 account. now rewrite Roles.has_set.
         -- now rewrite Roles.has_set_other.
-    + (* s1でrole0を持っていなかった場合 *)
+    + (* 事前状態 s1でrole0を持っていなかった場合 *)
       exists (RevokeRole role0 account), sender. rewrite <- eqs2.
       rewrite RevokeRoleS.
       * do 2 f_equal. simpl.
